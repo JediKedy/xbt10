@@ -3,134 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XBT-10 Axtarış Sistemi</title>
+    <title>XBT-10 Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50: '#f0f9ff', 100: '#e0f2fe', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e' }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         [v-cloak] { display: none; }
-        .sticky-search { position: sticky; top: 1rem; z-index: 50; }
+        .slide-fade-enter-active { transition: all 0.3s ease-out; }
+        .slide-fade-leave-active { transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1); }
+        .slide-fade-enter-from, .slide-fade-leave-to { transform: translateY(-10px); opacity: 0; }
+        body { transition: background-color 0.4s ease, color 0.4s ease; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-900">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
 
-<div id="app" v-cloak class="max-w-4xl mx-auto p-4 md:p-10">
+<div id="app" v-cloak class="max-w-4xl mx-auto px-4 py-8">
     
-    <header class="mb-10 text-center">
-        <h1 class="text-4xl font-black text-indigo-900 mb-2 tracking-tight">XBT-10 PORTALI</h1>
-        <p class="text-gray-500 font-medium">Xəstəliklərin Beynəlxalq Təsnifatı üzrə onlayn axtarış</p>
-    </header>
+    <nav class="flex justify-between items-center mb-10">
+        <div class="flex items-center gap-2">
+            <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center text-white shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor font-bold">
+                    <path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h1 class="text-2xl font-black tracking-tighter dark:text-white uppercase">XBT-10</h1>
+        </div>
+        
+        <button @click="toggleDarkMode" class="p-3 rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 hover:scale-110 transition-transform">
+            <span v-if="!isDark">🌙</span>
+            <span v-else>☀️</span>
+        </button>
+    </nav>
 
-    <div class="sticky-search mb-8">
-        <div class="relative shadow-2xl">
+    <div class="sticky top-6 z-50 mb-12">
+        <div class="relative group shadow-2xl rounded-2xl overflow-hidden">
             <input 
                 v-model="searchQuery" 
                 type="text" 
-                placeholder="Kod (məs: A01) və ya diaqnoz adı ilə axtar..." 
-                class="w-full p-5 pl-7 rounded-2xl border-none ring-2 ring-indigo-100 focus:ring-4 focus:ring-indigo-500 transition-all text-lg outline-none bg-white/90 backdrop-blur-md"
+                placeholder="Kod və ya diaqnoz axtar..." 
+                class="w-full p-6 pl-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-none outline-none text-lg ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-primary-600 transition-all dark:placeholder-slate-500"
             >
-            <div class="absolute right-5 top-5">
-                <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <button 
+                v-if="searchQuery" 
+                @click="searchQuery = ''" 
+                class="absolute right-6 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-400 hover:text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                <div v-else class="animate-spin rounded-full h-7 w-7 border-b-2 border-indigo-600"></div>
-            </div>
+            </button>
         </div>
     </div>
 
-    <div v-if="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded shadow-md">
-        <p class="font-bold">Xəta!</p>
-        <p>Məlumatları yükləmək mümkün olmadı. Zəhmət olmasa internet bağlantınızı yoxlayın.</p>
+    <div v-if="loading" class="flex flex-col items-center py-20">
+        <div class="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-4 text-slate-500 animate-pulse">Baza yüklənir...</p>
     </div>
 
-    <div v-if="Object.keys(groupedResults).length > 0" class="space-y-10">
-        <section v-for="(items, category) in groupedResults" :key="category" class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="bg-indigo-600 px-6 py-4">
-                <h2 class="text-white font-bold text-sm md:text-base uppercase tracking-wider">
-                    {{ category }}
-                </h2>
-            </div>
+    <div v-else class="space-y-6">
+        <div v-for="(items, category) in processedData" :key="category" 
+             class="group bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
             
-            <div class="divide-y divide-gray-100">
-                <div v-for="item in items" :key="item.code" class="group p-5 hover:bg-indigo-50 transition-colors flex items-start gap-4">
-                    <div class="flex-shrink-0">
-                        <span class="inline-block bg-gray-100 group-hover:bg-indigo-200 text-indigo-800 font-mono font-bold text-sm px-3 py-1.5 rounded-lg border border-gray-200 transition-colors">
-                            {{ item.code }}
-                        </span>
-                    </div>
-                    <div class="flex-grow">
-                        <p class="text-gray-800 font-semibold leading-snug group-hover:text-indigo-900 transition-colors">
-                            {{ item.description }}
-                        </p>
-                    </div>
+            <div @click="toggleMain(category)" 
+                 class="p-5 cursor-pointer flex justify-between items-center transition-colors"
+                 :class="openMain === category ? 'bg-primary-50 dark:bg-primary-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'">
+                <h2 class="font-bold text-slate-800 dark:text-slate-200 leading-tight pr-6">{{ category }}</h2>
+                <div class="flex-shrink-0 bg-slate-100 dark:bg-slate-800 p-2 rounded-full transition-transform" :class="{'rotate-180 bg-primary-600 text-white': openMain === category}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
             </div>
-        </section>
-    </div>
 
-    <div v-else-if="!loading" class="text-center py-24 bg-white rounded-3xl border-4 border-dashed border-gray-200">
-        <div class="text-6xl mb-4">🔍</div>
-        <p class="text-gray-400 text-xl font-medium">Uyğun məlumat tapılmadı.</p>
-        <button @click="searchQuery = ''" class="mt-4 text-indigo-600 font-bold hover:underline">Axtarışı təmizlə</button>
-    </div>
+            <transition name="slide-fade">
+                <div v-show="openMain === category || searchQuery" class="border-t border-slate-100 dark:border-slate-800">
+                    <div v-for="(subItems, groupCode) in items" :key="groupCode" class="border-b border-slate-50 dark:border-slate-800 last:border-0">
+                        <div @click="toggleSub(groupCode)" 
+                             class="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <span class="bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 font-mono font-black text-xs px-2.5 py-1.5 rounded-lg shadow-sm">
+                                    {{ groupCode }}
+                                </span>
+                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300">{{ subItems.main.description }}</span>
+                            </div>
+                            <svg v-if="subItems.children.length > 0" :class="{'rotate-180 text-primary-600': openSub === groupCode}" class="w-4 h-4 text-slate-300 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
 
+                        <transition name="slide-fade">
+                            <div v-show="openSub === groupCode || searchQuery" v-if="subItems.children.length > 0" class="bg-slate-50/50 dark:bg-slate-800/30 p-2 pl-6 space-y-1">
+                                <div v-for="child in subItems.children" :key="child.code" class="flex items-start gap-4 p-3 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-700">
+                                    <span class="text-primary-600 dark:text-primary-400 font-mono font-bold text-xs mt-0.5">{{ child.code }}</span>
+                                    <span class="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">{{ child.description }}</span>
+                                </div>
+                            </div>
+                        </transition>
+                    </div>
+                </div>
+            </transition>
+        </div>
+    </div>
 </div>
 
 <script>
-    const { createApp, ref, computed, onMounted } = Vue
+const { createApp, ref, computed, onMounted, watch } = Vue
 
-    createApp({
-        setup() {
-            const searchQuery = ref('')
-            const icdData = ref({})
-            const loading = ref(true)
-            const error = ref(false)
+createApp({
+    setup() {
+        const searchQuery = ref('')
+        const rawData = ref({})
+        const loading = ref(true)
+        const openMain = ref(null)
+        const openSub = ref(null)
+        const isDark = ref(localStorage.getItem('theme') === 'dark')
 
-            // GitHub-dakı JSON-dan datanı çəkirik
-            const fetchData = async () => {
-                const url = 'https://raw.githubusercontent.com/JediKedy/xbt10_data/refs/heads/main/data.json';
-                try {
-                    loading.value = true;
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    icdData.value = await response.json();
-                } catch (err) {
-                    console.error("Məlumat xətası:", err);
-                    error.value = true;
-                } finally {
-                    loading.value = false;
-                }
-            }
+        const toggleDarkMode = () => {
+            isDark.value = !isDark.value
+            document.documentElement.classList.toggle('dark')
+            localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
+        }
 
-            onMounted(fetchData)
+        const fetchData = async () => {
+            try {
+                const response = await fetch('https://raw.githubusercontent.com/JediKedy/xbt10_data/refs/heads/main/data.json');
+                const result = await response.json();
+                rawData.value = result.data;
+            } catch (err) { console.error("Xəta!"); }
+            finally { loading.value = false; }
+        }
 
-            // Axtarış məntiqi (Filtrləmə)
-            const groupedResults = computed(() => {
-                const query = searchQuery.value.toLowerCase().trim()
-                const result = {}
+        onMounted(() => {
+            fetchData();
+            if (isDark.value) document.documentElement.classList.add('dark');
+        })
 
-                if (!icdData.value) return result
+        const processedData = computed(() => {
+            const query = searchQuery.value.toLowerCase().trim()
+            const structured = {}
 
-                for (const [category, items] of Object.entries(icdData.value)) {
-                    const filteredItems = items.filter(item => 
-                        item.code.toLowerCase().includes(query) || 
-                        item.description.toLowerCase().includes(query)
-                    )
-                    
-                    if (filteredItems.length > 0) {
-                        result[category] = filteredItems
+            for (const [category, items] of Object.entries(rawData.value)) {
+                const groups = {}
+                items.forEach(item => {
+                    if (!item.code.includes('.')) groups[item.code] = { main: item, children: [] }
+                    else {
+                        const parentCode = item.code.split('.')[0]
+                        if (groups[parentCode]) groups[parentCode].children.push(item)
+                    }
+                })
+
+                const filteredGroups = {}
+                for (const [code, group] of Object.entries(groups)) {
+                    const matchesMain = group.main.description.toLowerCase().includes(query) || code.toLowerCase().includes(query)
+                    const matchedChildren = group.children.filter(c => c.code.toLowerCase().includes(query) || c.description.toLowerCase().includes(query))
+                    if (matchesMain || matchedChildren.length > 0) {
+                        filteredGroups[code] = { main: group.main, children: matchedChildren.length > 0 && query ? matchedChildren : group.children }
                     }
                 }
-                return result
-            })
-
-            return {
-                searchQuery,
-                groupedResults,
-                loading,
-                error
+                if (Object.keys(filteredGroups).length > 0) structured[category] = filteredGroups
             }
-        }
-    }).mount('#app')
+            return structured
+        })
+
+        const toggleMain = (cat) => openMain.value = openMain.value === cat ? null : cat
+        const toggleSub = (code) => openSub.value = openSub.value === code ? null : code
+
+        return { searchQuery, processedData, loading, openMain, openSub, toggleMain, toggleSub, isDark, toggleDarkMode }
+    }
+}).mount('#app')
 </script>
 
 </body>
