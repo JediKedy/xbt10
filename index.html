@@ -1,95 +1,108 @@
 <!DOCTYPE html>
-<html lang="az">
+<html lang="az" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XBT-10 Ultra Fast</title>
+    <title>XBT-10 | Rəqəmsal Klassifikasiya</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    colors: {
-                        primary: { 50: '#f0f9ff', 600: '#0284c7', 900: '#0c4a6e' }
-                    }
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
                 }
             }
         }
     </script>
     <style>
         [v-cloak] { display: none; }
-        /* Performans üçün hardware acceleration */
-        .smooth-render { transform: translateZ(0); backface-visibility: hidden; }
-        /* Sadə keçid animasiyası */
-        .v-enter-active, .v-leave-active { transition: opacity 0.2s ease; }
-        .v-enter-from, .v-leave-to { opacity: 0; }
+        .glass { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen smooth-render">
+<body class="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-screen transition-colors duration-300">
 
-<div id="app" v-cloak class="max-w-4xl mx-auto px-4 py-8">
-    
-    <nav class="flex justify-between items-center mb-8">
-        <h1 class="text-2xl font-black tracking-tighter dark:text-white uppercase">XBT-10 <span class="text-primary-600 text-sm">v2.0</span></h1>
-        <button @click="toggleDarkMode" class="p-3 rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800">
-            {{ isDark ? '☀️' : '🌙' }}
-        </button>
-    </nav>
-
-    <div class="sticky top-4 z-50 mb-8">
-        <div class="relative shadow-2xl rounded-2xl overflow-hidden">
-            <input 
-                v-model="searchQuery" 
-                type="text" 
-                placeholder="Kod və ya diaqnoz axtar..." 
-                class="w-full p-5 pl-7 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-none outline-none text-lg ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-primary-600 transition-all"
-            >
-            <button v-if="searchQuery" @click="searchQuery = ''" class="absolute right-5 top-1/2 -translate-y-1/2 p-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+<div id="app" v-cloak>
+    <nav class="fixed w-full z-50 top-0 bg-white/70 dark:bg-zinc-950/70 border-b border-zinc-100 dark:border-zinc-900 glass">
+        <div class="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+                <h1 class="text-lg font-bold tracking-tighter uppercase">XBT-10 <span class="text-indigo-600 dark:text-indigo-400 font-normal lowercase">ultra</span></h1>
+            </div>
+            <button @click="toggleDarkMode" class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors">
+                <span v-if="isDark">☀️</span>
+                <span v-else>🌙</span>
             </button>
         </div>
-    </div>
+    </nav>
 
-    <div v-if="searchQuery" class="mb-4 text-sm font-medium text-slate-500 px-2">
-        Tapılan bölmə sayı: {{ Object.keys(processedData).length }}
-    </div>
-
-    <div v-if="loading" class="flex justify-center py-20 italic text-slate-400">Yüklənir...</div>
-
-    <div v-else class="space-y-4">
-        <div v-for="(items, category) in processedData" :key="category" 
-             class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-            
-            <div @click="toggleMain(category)" class="p-4 cursor-pointer flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                <h2 class="font-bold text-slate-800 dark:text-slate-200 text-sm md:text-base leading-snug">{{ category }}</h2>
-                <svg :class="{'rotate-180 text-primary-600': openMain === category}" class="w-5 h-5 text-slate-300 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <main class="max-w-4xl mx-auto px-6 pt-32 pb-24">
+        
+        <div class="mb-12">
+            <div class="relative group">
+                <input 
+                    v-model="searchQuery" 
+                    type="text" 
+                    placeholder="Kod və ya diaqnoz axtar..." 
+                    class="w-full p-6 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 rounded-[2rem] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-xl font-medium placeholder:text-zinc-400"
+                >
+                <div class="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3">
+                    <button v-if="searchQuery" @click="searchQuery = ''" class="text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                    <div class="w-px h-6 bg-zinc-200 dark:bg-zinc-800"></div>
+                    <svg class="w-6 h-6 text-zinc-300 dark:text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
             </div>
+            <p v-if="searchQuery" class="mt-4 text-sm text-zinc-500 font-medium ml-4 italic">
+                Axtarış nəticəsi: {{ Object.keys(processedData).length }} bölmə tapıldı.
+            </p>
+        </div>
 
-            <div v-if="openMain === category || searchQuery" class="border-t border-slate-100 dark:border-slate-800">
-                <div v-for="(subItems, groupCode) in items" :key="groupCode" class="border-b border-slate-50 dark:border-slate-800 last:border-0">
-                    <div @click="toggleSub(groupCode)" class="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <span class="bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 font-mono font-bold text-xs px-2 py-1 rounded">
+        <div v-if="loading" class="flex flex-col items-center py-24 gap-4">
+            <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-zinc-400 font-medium">Məlumat bazası sinxronizasiya edilir...</p>
+        </div>
+
+        <div v-else class="space-y-4">
+            <div v-for="(items, category) in processedData" :key="category" 
+                 class="group bg-white dark:bg-zinc-900/30 border border-zinc-100 dark:border-zinc-800 rounded-3xl overflow-hidden transition-all hover:shadow-xl hover:shadow-indigo-500/5">
+                
+                <div @click="toggleMain(category)" class="p-6 cursor-pointer flex justify-between items-start gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors">
+                    <h2 class="font-bold text-zinc-800 dark:text-zinc-200 leading-tight">{{ category }}</h2>
+                    <div class="flex-shrink-0 mt-1">
+                        <svg :class="{'rotate-180 text-indigo-500': openMain === category}" class="w-5 h-5 text-zinc-300 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                </div>
+
+                <div v-if="openMain === category || searchQuery" class="px-6 pb-6 space-y-3">
+                    <div v-for="(subItems, groupCode) in items" :key="groupCode" class="border-t border-zinc-50 dark:border-zinc-800 pt-4">
+                        <div @click="toggleSub(groupCode)" class="flex items-start gap-4 cursor-pointer group/sub">
+                            <span class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-mono font-bold text-xs px-3 py-1.5 rounded-xl">
                                 {{ groupCode }}
                             </span>
-                            <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ subItems.main.description }}</span>
+                            <span class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 group-hover/sub:text-indigo-600 transition-colors">{{ subItems.main.description }}</span>
                         </div>
-                    </div>
 
-                    <div v-if="openSub === groupCode || searchQuery" class="bg-slate-50/50 dark:bg-slate-800/30 p-2 pl-4">
-                        <div v-for="child in subItems.children" :key="child.code" class="flex items-start gap-3 p-2 text-sm">
-                            <span class="text-primary-600 font-mono font-bold">{{ child.code }}</span>
-                            <span class="text-slate-600 dark:text-slate-400 leading-tight">{{ child.description }}</span>
+                        <div v-if="openSub === groupCode || searchQuery" class="mt-4 ml-4 pl-4 border-l-2 border-indigo-500/20 space-y-3">
+                            <div v-for="child in subItems.children" :key="child.code" class="flex items-start gap-3 group/item">
+                                <span class="text-indigo-500 font-mono font-bold text-xs pt-1">{{ child.code }}</span>
+                                <span class="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed group-hover/item:text-zinc-900 dark:group-hover/item:text-white transition-colors">
+                                    {{ child.description }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
+
+    <footer class="max-w-4xl mx-auto px-6 py-12 border-t border-zinc-100 dark:border-zinc-900 text-xs text-zinc-400 text-center">
+        <p>© 2026 JediKedy | Ümumdünya Səhiyyə Təşkilatının standartlarına uyğun təsnifat.</p>
+    </footer>
 </div>
 
 <script>
@@ -102,22 +115,26 @@ createApp({
         const loading = ref(true)
         const openMain = ref(null)
         const openSub = ref(null)
-        const isDark = ref(localStorage.getItem('theme') === 'dark')
+        const isDark = ref(localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches))
 
         const toggleDarkMode = () => {
             isDark.value = !isDark.value
-            document.documentElement.classList.toggle('dark')
-            localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
+            if (isDark.value) {
+                document.documentElement.classList.add('dark')
+                localStorage.setItem('theme', 'dark')
+            } else {
+                document.documentElement.classList.remove('dark')
+                localStorage.setItem('theme', 'light')
+            }
         }
 
         onMounted(async () => {
+            if (isDark.value) document.documentElement.classList.add('dark');
             try {
                 const res = await fetch('https://raw.githubusercontent.com/JediKedy/xbt10_data/refs/heads/main/data.json');
                 const json = await res.json();
-                // Obyekti dondururuq (Freeze) ki, Vue hər bir element üçün lazımsız "observer" yaratmasın (Performans artımı)
                 rawData.value = Object.freeze(json.data);
             } finally { loading.value = false; }
-            if (isDark.value) document.documentElement.classList.add('dark');
         })
 
         const processedData = computed(() => {
@@ -132,7 +149,6 @@ createApp({
             return transform(filtered)
         })
 
-        // Köməkçi funksiya: Datanı iyerarxiyaya salır
         function transform(data) {
             const structured = {}
             for (const [cat, items] of Object.entries(data)) {
@@ -142,7 +158,7 @@ createApp({
                     else {
                         const p = i.code.split('.')[0]
                         if (groups[p]) groups[p].children.push(i)
-                        else groups[i.code] = { main: i, children: [] } // Əgər ana kodu yoxdursa özünü ana et
+                        else groups[i.code] = { main: i, children: [] }
                     }
                 })
                 structured[cat] = groups
