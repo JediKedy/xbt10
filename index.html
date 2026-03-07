@@ -3,16 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>XBT-10 | Rəqəmsal Klassifikasiya</title>
+<title>XBT-10</title>
 <meta name="application-name" content="XBT-10">
-<meta name="description" content="XBT-10 Rəqəmsal Klassifikasiya — Ümumdünya Səhiyyə Təşkilatının standartlarına uyğun təsnifat.">
 <meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1e1b4b" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="XBT-10">
-<link rel="icon" type="image/svg+xml" href="app-icon-512x512.png">
+<link rel="icon" type="image/png" href="app-icon-512x512.png">
 <link rel="apple-touch-icon" href="app-icon-512x512.png">
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.tailwindcss.com"></script>
@@ -71,7 +70,7 @@
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-indigo-600" aria-hidden="true"></span>
         <h1 class="text-lg font-bold tracking-tighter uppercase">
-          XBT-10 <span class="text-indigo-600 dark:text-indigo-400 font-normal lowercase">ultra</span>
+          XBT-10
         </h1>
       </div>
 
@@ -105,27 +104,6 @@
       </div>
     </div>
   </nav>
-
-  <!-- ── PWA install banner ──────────────────────────────────── -->
-  <transition name="acc">
-    <div
-      v-if="showBanner"
-      class="pwa-banner fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4"
-      role="dialog"
-      aria-label="Tətbiqi yüklə">
-      <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-2xl shadow-indigo-500/10 p-4 flex items-center gap-4">
-        <img src="app-icon-512x512.png" alt="XBT-10 icon" class="w-12 h-12 rounded-xl flex-shrink-0" loading="lazy">
-        <div class="flex-1 min-w-0">
-          <p class="font-bold text-sm">XBT-10 Ultra</p>
-          <p class="text-xs text-zinc-500 dark:text-zinc-400">Ana ekrana əlavə et</p>
-        </div>
-        <div class="flex gap-2 flex-shrink-0">
-          <button @click="dismissBanner" class="text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 px-2 py-1 transition-colors">Sonra</button>
-          <button @click="installPWA"    class="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg transition-colors">Yüklə</button>
-        </div>
-      </div>
-    </div>
-  </transition>
 
   <!-- ── Main ───────────────────────────────────────────────── -->
   <main class="max-w-4xl mx-auto px-6 pt-32 pb-24">

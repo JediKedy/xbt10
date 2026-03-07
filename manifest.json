@@ -1,13 +1,8 @@
 {
-  "name": "XBT-10 Rəqəmsal Klassifikasiya",
+  "name": "XBT-10",
   "short_name": "XBT-10",
-  "description": "Ümumdünya Səhiyyə Təşkilatının standartlarına uyğun rəqəmsal tibbi təsnifat.",
   "start_url": "./",
-  "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#ffffff",
-  "theme_color": "#4f46e5",
   "lang": "az",
   "icons": [
     {
@@ -22,7 +17,5 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ],
-  "screenshots": [],
-  "categories": ["medical", "reference"]
+  ]
 }
