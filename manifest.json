@@ -11,15 +11,15 @@
   "lang": "az",
   "icons": [
     {
-      "src": "app-icon.svg",
+      "src": "app-icon.png",
       "sizes": "any",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "app-icon.svg",
+      "src": "app-icon.png",
       "sizes": "any",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ],
