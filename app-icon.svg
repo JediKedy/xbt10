@@ -10,7 +10,7 @@
       .title {
         font-family: 'Inter', sans-serif;
         font-weight: 800;
-        font-size: 95px;
+        font-size: 105px;
         fill: white;
         text-anchor: middle;
         dominant-baseline: middle;
