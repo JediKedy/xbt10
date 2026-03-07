@@ -1,19 +1,24 @@
 {
-  "name": "XBT-10",
+  "name": "XBT-10 Təsnifatı",
   "short_name": "XBT-10",
-  "start_url": "./",
+  "description": "Ümumdünya Səhiyyə Təşkilatının standartlarına uyğun xəstəliklər təsnifatı",
+  "start_url": "./index.html",
   "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
   "lang": "az",
+  "categories": ["medical", "education"],
   "icons": [
     {
       "src": "app-icon-512x512.png",
-      "sizes": "any",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
       "src": "app-icon-512x512.png",
-      "sizes": "any",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
