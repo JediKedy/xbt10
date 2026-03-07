@@ -1,0 +1,17 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#007AFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0051A8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="512" height="512" rx="114" fill="url(#bgGrad)"/>
+  
+  <path d="M256 120V392M120 256H392" stroke="white" stroke-width="40" stroke-opacity="0.1" stroke-linecap="round"/>
+  
+  <text x="50%" y="265" text-anchor="middle" fill="white" style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 800; font-size: 140px; letter-spacing: -4px;">XBT-10</text>
+  
+  <rect x="176" y="300" width="160" height="60" rx="30" fill="#FFFFFF"/>
+  <text x="256" y="343" text-anchor="middle" fill="#0051A8" style="font-family: sans-serif; font-weight: 900; font-size: 38px;">ICD-10</text>
+</svg>
