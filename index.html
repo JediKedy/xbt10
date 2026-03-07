@@ -4,27 +4,47 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>XBT-10</title>
+
+<!-- PWA Meta -->
 <meta name="application-name" content="XBT-10">
+<meta name="description" content="Ümumdünya Səhiyyə Təşkilatının standartlarına uyğun xəstəliklər təsnifatı">
 <meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1e1b4b" media="(prefers-color-scheme: dark)">
+
+<!-- Mobile / Apple -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="XBT-10">
-<link rel="icon" type="image/png" href="app-icon-512x512.png">
-<link rel="apple-touch-icon" href="app-icon-512x512.png">
+
+<!-- Apple touch icons -->
+<link rel="apple-touch-icon" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+
+<!-- Apple splash screens (optional – add as needed) -->
+<link rel="apple-touch-startup-image" href="icons/icon-512.png">
+
+<!-- Web App Manifest -->
 <link rel="manifest" href="manifest.json">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+<!-- Fonts & Styles -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
 <script>
   tailwind.config = {
     darkMode: 'class',
     theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
   };
-  // Apply theme before first paint to avoid flash
+  // Apply saved theme before first paint (no flash)
   try {
     const stored = localStorage.getItem('theme');
     if (stored === 'dark' || (!stored && matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -32,10 +52,11 @@
     }
   } catch (_) {}
 </script>
+
 <style>
   [v-cloak] { display: none }
 
-  /* Shared accordion transition */
+  /* Accordion transition */
   .acc-enter-active,
   .acc-leave-active {
     overflow: hidden;
@@ -46,36 +67,50 @@
   .acc-enter-from,
   .acc-leave-to { max-height: 0; opacity: 0 }
 
+  /* PWA install banner slide-up */
   @keyframes slideUp {
     from { transform: translateY(100%); opacity: 0 }
     to   { transform: translateY(0);    opacity: 1 }
   }
   .pwa-banner { animation: slideUp .35s cubic-bezier(.22,1,.36,1) both }
 
-  /* Smooth backdrop */
+  /* Glass navbar */
   .glass {
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
   }
+
+  /* Offline indicator */
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1 }
+    50% { opacity: 0.4 }
+  }
+  .offline-dot { animation: pulse-dot 1.5s ease-in-out infinite }
 </style>
 </head>
 <body class="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-screen transition-colors duration-300">
 
 <div id="app" v-cloak>
 
-  <!-- ── Navbar ─────────────────────────────────────────────── -->
+  <!-- ── Navbar ──────────────────────────────────────────────────────── -->
   <nav class="fixed w-full z-50 top-0 bg-white/70 dark:bg-zinc-950/70 border-b border-zinc-100 dark:border-zinc-900 glass">
     <div class="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
 
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-indigo-600" aria-hidden="true"></span>
-        <h1 class="text-lg font-bold tracking-tighter uppercase">
-          XBT-10
-        </h1>
+        <h1 class="text-lg font-bold tracking-tighter uppercase">XBT-10</h1>
+        <!-- Offline badge -->
+        <span
+          v-if="!isOnline"
+          class="flex items-center gap-1.5 ml-2 px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-semibold">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 offline-dot"></span>
+          Offline
+        </span>
       </div>
 
       <div class="flex items-center gap-2">
-        <!-- PWA install (only when browser exposes prompt) -->
+
+        <!-- PWA install button (only when browser exposes prompt) -->
         <button
           v-if="pwaPrompt"
           @click="installPWA"
@@ -101,11 +136,12 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998Z"/>
           </svg>
         </button>
+
       </div>
     </div>
   </nav>
 
-  <!-- ── Main ───────────────────────────────────────────────── -->
+  <!-- ── Main ────────────────────────────────────────────────────────── -->
   <main class="max-w-4xl mx-auto px-6 pt-32 pb-24">
 
     <!-- Search -->
@@ -149,6 +185,9 @@
 
     <!-- Error -->
     <div v-else-if="error" class="py-24 text-center" role="alert">
+      <svg class="w-12 h-12 text-red-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+      </svg>
       <p class="text-red-500 font-bold">{{ error }}</p>
       <button @click="fetchData" class="mt-4 text-sm text-indigo-600 hover:underline">Yenidən cəhd et</button>
     </div>
@@ -201,7 +240,10 @@
 
               <!-- Children -->
               <transition name="acc">
-                <ul v-if="isSubOpen(groupCode) && sub.children.length" :id="`sub-${groupCode}`" class="mt-4 ml-4 pl-4 border-l-2 border-indigo-500/20 space-y-3">
+                <ul
+                  v-if="isSubOpen(groupCode) && sub.children.length"
+                  :id="`sub-${groupCode}`"
+                  class="mt-4 ml-4 pl-4 border-l-2 border-indigo-500/20 space-y-3">
                   <li v-for="child in sub.children" :key="child.code" class="flex items-start gap-3 group/item">
                     <span class="flex-shrink-0 text-indigo-500 font-mono font-bold text-xs pt-1">{{ child.code }}</span>
                     <span class="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed group-hover/item:text-zinc-900 dark:group-hover/item:text-white transition-colors">
@@ -210,6 +252,7 @@
                   </li>
                 </ul>
               </transition>
+
             </div>
           </div>
         </transition>
@@ -220,43 +263,86 @@
         Nəticə tapılmadı.
       </div>
     </template>
+
   </main>
 
+  <!-- ── PWA Install Banner ───────────────────────────────────────────── -->
+  <transition name="acc">
+    <div
+      v-if="showBanner"
+      class="pwa-banner fixed bottom-0 inset-x-0 z-50 p-4 sm:p-6 pointer-events-none">
+      <div class="max-w-sm mx-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-3xl shadow-2xl shadow-indigo-500/10 p-5 flex items-start gap-4 pointer-events-auto">
+        <div class="w-12 h-12 flex-shrink-0 rounded-2xl bg-indigo-600 flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="font-bold text-sm text-zinc-900 dark:text-zinc-100">XBT-10 tətbiqini yüklə</p>
+          <p class="text-xs text-zinc-500 mt-0.5">Offline istifadə üçün ana ekrana əlavə et</p>
+          <div class="flex gap-2 mt-3">
+            <button
+              @click="installPWA"
+              class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition-colors">
+              Yüklə
+            </button>
+            <button
+              @click="dismissBanner"
+              class="px-4 py-1.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-white text-xs font-medium rounded-xl transition-colors">
+              Sonra
+            </button>
+          </div>
+        </div>
+        <button @click="dismissBanner" class="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors -mt-1" aria-label="Bağla">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </transition>
+
+  <!-- ── Footer ──────────────────────────────────────────────────────── -->
   <footer class="max-w-4xl mx-auto px-6 py-12 border-t border-zinc-100 dark:border-zinc-900 text-xs text-zinc-400 text-center">
     <p>© 2026 JediKedy | Ümumdünya Səhiyyə Təşkilatının standartlarına uyğun təsnifat.</p>
   </footer>
-</div>
 
-<!-- ── Service Worker (inline blob — no separate sw.js needed) ── -->
+</div><!-- /#app -->
+
+<!-- ── Service Worker Registration ─────────────────────────────────── -->
 <script>
-if ('serviceWorker' in navigator) {
-  const SW = `
-const CACHE = 'xbt10-v1';
-const PRECACHE = [
-  'https://cdn.tailwindcss.com',
-  'https://unpkg.com/vue@3/dist/vue.global.js',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap'
-];
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('./sw.js', { scope: './' })
+        .then(reg => {
+          console.log('[SW] Registered, scope:', reg.scope);
 
-self.addEventListener('install',  e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE).catch(()=>{}))) });
-self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())) });
-self.addEventListener('fetch', e => {
-  const isData = e.request.url.includes('raw.githubusercontent.com');
-  e.respondWith(
-    isData
-      ? fetch(e.request).catch(() => caches.match(e.request))
-      : caches.match(e.request).then(hit => hit || fetch(e.request).then(r => { caches.open(CACHE).then(c => c.put(e.request, r.clone())); return r }))
-  );
-});
-`;
-  const url = URL.createObjectURL(new Blob([SW], { type: 'application/javascript' }));
-  navigator.serviceWorker.register(url, { scope: './' }).catch(e => console.warn('SW:', e));
-}
+          // Listen for updates and prompt user to refresh
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New content available – optionally show a toast here
+                console.log('[SW] New version available.');
+              }
+            });
+          });
+        })
+        .catch(err => console.warn('[SW] Registration failed:', err));
+    });
+
+    // Page reload when new SW takes control
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) { refreshing = true; window.location.reload(); }
+    });
+  }
 </script>
 
-<!-- ── App ──────────────────────────────────────────────────── -->
+<!-- ── Vue App ──────────────────────────────────────────────────────── -->
 <script>
-const { createApp, ref, computed, onMounted } = Vue;
+const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
 
 const DATA_URL = 'https://raw.githubusercontent.com/JediKedy/xbt10/refs/heads/main/data.json';
 
@@ -266,7 +352,7 @@ function buildGroups(items) {
   for (const item of items) {
     if (!item.code.includes('.')) {
       groups[item.code] ??= { main: item, children: [] };
-      groups[item.code].main = item;          // ensure parent wins
+      groups[item.code].main = item;
     } else {
       const parent = item.code.split('.')[0];
       groups[parent] ??= { main: { code: parent, description: parent }, children: [] };
@@ -293,12 +379,25 @@ createApp({
     const loading = ref(true);
     const error   = ref(null);
 
-    const openMain = ref(null);   // active category key
-    const openSub  = ref(null);   // active group code
+    const openMain = ref(null);
+    const openSub  = ref(null);
 
-    const isDark      = ref(document.documentElement.classList.contains('dark'));
-    const pwaPrompt   = ref(null);
-    const showBanner  = ref(false);
+    const isDark     = ref(document.documentElement.classList.contains('dark'));
+    const pwaPrompt  = ref(null);
+    const showBanner = ref(false);
+    const isOnline   = ref(navigator.onLine);
+
+    /* ── Online / Offline tracking ── */
+    const handleOnline  = () => { isOnline.value = true  };
+    const handleOffline = () => { isOnline.value = false };
+    onMounted(() => {
+      window.addEventListener('online',  handleOnline);
+      window.addEventListener('offline', handleOffline);
+    });
+    onUnmounted(() => {
+      window.removeEventListener('online',  handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    });
 
     /* ── Theme ── */
     function toggleDark() {
@@ -307,22 +406,33 @@ createApp({
       try { localStorage.setItem('theme', isDark.value ? 'dark' : 'light') } catch (_) {}
     }
 
-    /* ── PWA ── */
+    /* ── PWA install prompt ── */
     window.addEventListener('beforeinstallprompt', e => {
       e.preventDefault();
       pwaPrompt.value = e;
-      try { if (!localStorage.getItem('pwa-dismissed')) setTimeout(() => { showBanner.value = true }, 3000) }
-      catch (_) { setTimeout(() => { showBanner.value = true }, 3000) }
+      try {
+        if (!localStorage.getItem('pwa-dismissed')) {
+          setTimeout(() => { showBanner.value = true }, 3000);
+        }
+      } catch (_) {
+        setTimeout(() => { showBanner.value = true }, 3000);
+      }
     });
 
-    window.addEventListener('appinstalled', () => { pwaPrompt.value = null; showBanner.value = false });
+    window.addEventListener('appinstalled', () => {
+      pwaPrompt.value  = null;
+      showBanner.value = false;
+      console.log('[PWA] App installed successfully');
+    });
 
     async function installPWA() {
       showBanner.value = false;
       if (!pwaPrompt.value) return;
       pwaPrompt.value.prompt();
       const { outcome } = await pwaPrompt.value.userChoice;
-      if (outcome === 'dismissed') try { localStorage.setItem('pwa-dismissed', '1') } catch (_) {}
+      if (outcome === 'dismissed') {
+        try { localStorage.setItem('pwa-dismissed', '1') } catch (_) {}
+      }
       pwaPrompt.value = null;
     }
 
@@ -341,7 +451,7 @@ createApp({
         const json = await res.json();
         rawData.value = Object.freeze(json.data ?? {});
       } catch (e) {
-        console.error('Fetch failed:', e);
+        console.error('[App] Fetch failed:', e);
         error.value = 'Məlumat bazası yüklənmədi. Yenidən cəhd edin.';
       } finally {
         loading.value = false;
@@ -350,7 +460,7 @@ createApp({
 
     onMounted(fetchData);
 
-    /* ── Computed ── */
+    /* ── Computed: filter + transform ── */
     const processedData = computed(() => {
       if (!rawData.value) return {};
       const q = query.value.toLowerCase();
@@ -358,7 +468,9 @@ createApp({
 
       const filtered = {};
       for (const [cat, items] of Object.entries(rawData.value)) {
-        const matches = items.filter(i => i.code.toLowerCase().includes(q) || i.description.toLowerCase().includes(q));
+        const matches = items.filter(
+          i => i.code.toLowerCase().includes(q) || i.description.toLowerCase().includes(q)
+        );
         if (matches.length) filtered[cat] = matches;
       }
       return transform(filtered);
@@ -369,8 +481,8 @@ createApp({
     /* ── Accordion helpers ── */
     const isSearching = () => !!query.value;
 
-    function isMainOpen(cat)   { return isSearching() || openMain.value === cat }
-    function isSubOpen(code)   { return isSearching() || openSub.value  === code }
+    function isMainOpen(cat)  { return isSearching() || openMain.value === cat  }
+    function isSubOpen(code)  { return isSearching() || openSub.value  === code }
 
     function toggleMain(cat) {
       if (isSearching()) return;
@@ -389,6 +501,7 @@ createApp({
       openMain, openSub, isMainOpen, isSubOpen, toggleMain, toggleSub,
       isDark, toggleDark,
       pwaPrompt, showBanner, installPWA, dismissBanner,
+      isOnline,
     };
   }
 }).mount('#app');
