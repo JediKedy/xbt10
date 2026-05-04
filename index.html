@@ -1,192 +1,476 @@
 <!DOCTYPE html>
-<html lang="az">
+<html lang="az" class="scroll-smooth">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XBT-10</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XBT-10 | Rəqəmsal Klassifikasiya</title>
+<meta name="application-name" content="XBT-10">
+<meta name="description" content="XBT-10 Rəqəmsal Klassifikasiya — Ümumdünya Səhiyyə Təşkilatının standartlarına uyğun təsnifat.">
+<meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1e1b4b" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="XBT-10">
+<link rel="icon" type="image/svg+xml" href="app-icon-512x512.png">
+<link rel="apple-touch-icon" href="app-icon-512x512.png">
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
+  };
+  // Dark mode flaşını önləmək üçün ilk rənderdən əvvəl tətbiq et
+  try {
+    const stored = localStorage.getItem('theme');
+    if (stored === 'dark' || (!stored && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  } catch (_) {}
+</script>
+<style>
+  [v-cloak] { display: none }
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  .acc-enter-active,
+  .acc-leave-active {
+    overflow: hidden;
+    transition: max-height .25s ease, opacity .2s ease;
+    max-height: 9999px;
+    opacity: 1;
+  }
+  .acc-enter-from,
+  .acc-leave-to { max-height: 0; opacity: 0 }
 
-    <style>
-        [v-cloak] { display: none }
-        /* Sadələşdirilmiş keçid animasiyası */
-        .fade-enter-active { transition: opacity 0.2s ease; }
-        .fade-enter-from { opacity: 0; }
-        .glass { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-    </style>
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0 }
+    to   { transform: translateY(0);    opacity: 1 }
+  }
+  .pwa-banner { animation: slideUp .35s cubic-bezier(.22,1,.36,1) both }
+
+  .glass {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  /* Ekran oxuyucuları üçün gizli mətn */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+</style>
 </head>
-<body class="bg-slate-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors">
+<body class="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-screen transition-colors duration-300">
 
 <div id="app" v-cloak>
-    <!-- Kopyalandı Bildirişi -->
-    <div v-if="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-indigo-600 text-white px-5 py-2 rounded-full shadow-xl text-sm">
-        {{ toast }}
+
+  <!-- ── Navbar ─────────────────────────────────────────────── -->
+  <nav class="fixed w-full z-50 top-0 bg-white/70 dark:bg-zinc-950/70 border-b border-zinc-100 dark:border-zinc-900 glass">
+    <div class="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-indigo-600" aria-hidden="true"></span>
+        <h1 class="text-lg font-bold tracking-tighter uppercase">
+          XBT-10 <span class="text-indigo-600 dark:text-indigo-400 font-normal lowercase">ultra</span>
+        </h1>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- PWA install (yalnız brauzer prompt təqdim etdikdə) -->
+        <button
+          v-if="pwaPrompt"
+          @click="installPWA"
+          title="Tətbiqi yüklə"
+          aria-label="Tətbiqi telefona yüklə"
+          class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+          </svg>
+        </button>
+
+        <!-- Dark / Light toggle -->
+        <button
+          @click="toggleDark"
+          :aria-label="isDark ? 'İşıqlı rejimə keç' : 'Qaranlıq rejimə keç'"
+          class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors border border-zinc-200 dark:border-zinc-800">
+          <svg v-if="isDark" class="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0Z"/>
+          </svg>
+          <svg v-else class="w-5 h-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998Z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── PWA install banner ──────────────────────────────────── -->
+  <transition name="acc">
+    <div
+      v-if="showBanner"
+      class="pwa-banner fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4"
+      role="dialog"
+      aria-label="Tətbiqi yüklə">
+      <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-2xl shadow-indigo-500/10 p-4 flex items-center gap-4">
+        <img src="app-icon-512x512.png" alt="XBT-10 icon" class="w-12 h-12 rounded-xl flex-shrink-0" loading="lazy">
+        <div class="flex-1 min-w-0">
+          <p class="font-bold text-sm">XBT-10 Ultra</p>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">Ana ekrana əlavə et</p>
+        </div>
+        <div class="flex gap-2 flex-shrink-0">
+          <button @click="dismissBanner" class="text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 px-2 py-1 transition-colors">Sonra</button>
+          <button @click="installPWA"    class="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg transition-colors">Yüklə</button>
+        </div>
+      </div>
+    </div>
+  </transition>
+
+  <!-- ── Main ───────────────────────────────────────────────── -->
+  <main class="max-w-4xl mx-auto px-6 pt-32 pb-24">
+
+    <!-- Axtarış -->
+    <div class="mb-12">
+      <div class="relative">
+        <label for="searchInput" class="sr-only">Kod və ya diaqnoz axtar</label>
+        <input
+          id="searchInput"
+          v-model.trim="query"
+          type="search"
+          autocomplete="off"
+          placeholder="Kod və ya diaqnoz axtar..."
+          class="w-full p-6 pr-20 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 rounded-[2rem] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-xl font-medium placeholder:text-zinc-400"
+        >
+        <div class="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3" aria-hidden="true">
+          <button
+            v-if="query"
+            @click="query = ''"
+            aria-label="Axtarışı sil"
+            class="text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+          <div class="w-px h-6 bg-zinc-200 dark:bg-zinc-800"></div>
+          <svg class="w-6 h-6 text-zinc-300 dark:text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Ekran oxuyucuları üçün həmişə DOM-da, məzmun dəyişir -->
+      <p aria-live="polite" aria-atomic="true" class="sr-only">
+        {{ debouncedQuery ? `${resultCount} nəticə tapıldı` : '' }}
+      </p>
+
+      <!-- Vizual nəticə sayı -->
+      <p v-if="debouncedQuery" class="mt-4 text-sm text-zinc-500 font-medium ml-4 italic">
+        Axtarış nəticəsi: {{ resultCount }} nəticə tapıldı.
+      </p>
     </div>
 
-    <!-- Header -->
-    <nav class="fixed w-full z-50 top-0 bg-white/80 dark:bg-zinc-950/80 border-b border-zinc-200 dark:border-zinc-800 glass">
-        <div class="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
-            <h1 class="font-black tracking-tighter text-indigo-600">XBT-10</h1>
-            <button @click="toggleDark" class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg">
-                <span v-if="isDark">Gündüz rejim</span><span v-else>Tünd rejim</span>
-            </button>
-        </div>
-    </nav>
+    <!-- Yüklənir -->
+    <div v-if="loading" class="flex flex-col items-center py-24 gap-4" role="status" aria-label="Yüklənir">
+      <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-zinc-400 font-medium">Məlumat bazası sinxronizasiya edilir...</p>
+    </div>
 
-    <main class="max-w-3xl mx-auto px-4 pt-20 pb-10">
-        <!-- Axtarış -->
-        <div class="sticky top-[70px] z-40 mb-6">
-            <input
-                v-model.trim="searchQuery"
-                type="text"
-                placeholder="Kod və ya diaqnoz..."
-                class="w-full p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg outline-none focus:border-indigo-500 transition-all"
-            >
-        </div>
+    <!-- Xəta -->
+    <div v-else-if="error" class="py-24 text-center" role="alert">
+      <p class="text-red-500 font-bold">{{ error }}</p>
+      <button @click="fetchData" class="mt-4 text-sm text-indigo-600 hover:underline">Yenidən cəhd et</button>
+    </div>
 
-        <!-- Yüklənir -->
-        <div v-if="loading" class="text-center py-20 font-medium text-zinc-500">Baza yüklənir...</div>
+    <!-- Nəticələr -->
+    <template v-else>
+      <div
+        v-for="(groups, category) in processedData"
+        :key="category"
+        class="mb-4 bg-white dark:bg-zinc-900/30 border border-zinc-100 dark:border-zinc-800 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-indigo-500/5 transition-shadow">
 
-        <!-- Siyahı -->
-        <div class="space-y-3">
-            <div v-for="(groups, category) in limitedData" :key="category" 
-                 class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
-                
-                <button @click="toggleMain(category)" 
-                        class="w-full p-4 flex justify-between items-center hover:bg-zinc-50 dark:hover:bg-zinc-800/50 text-left font-bold text-sm">
-                    {{ category }}
-                    <span :class="{'rotate-180': openMain === category || query}" class="transition-transform opacity-30">▼</span>
-                </button>
+        <!-- Kateqoriya toggle -->
+        <button
+          type="button"
+          @click="toggleMain(category)"
+          :aria-expanded="isMainOpen(category)"
+          :aria-controls="`cat-${category}`"
+          class="w-full p-6 flex justify-between items-start gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors text-left">
+          <h2 class="font-bold text-zinc-800 dark:text-zinc-200 leading-tight">{{ category }}</h2>
+          <svg
+            :class="isMainOpen(category) ? 'rotate-180 text-indigo-500' : 'text-zinc-300'"
+            class="flex-shrink-0 mt-1 w-5 h-5 transition-transform duration-300"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
 
-                <div v-show="openMain === category || query" class="px-4 pb-4 space-y-4 border-t border-zinc-100 dark:border-zinc-800">
-                    <div v-for="(sub, groupCode) in groups" :key="groupCode" class="mt-4">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] px-1.5 py-0.5 rounded font-mono font-bold">{{ groupCode }}</span>
-                            <span class="text-xs font-bold opacity-80">{{ sub.main.description }}</span>
-                        </div>
+        <!-- Kateqoriya gövdəsi -->
+        <transition name="acc">
+          <div v-if="isMainOpen(category)" :id="`cat-${category}`" class="px-6 pb-6 space-y-3">
+            <div
+              v-for="(sub, groupCode) in groups"
+              :key="groupCode"
+              class="border-t border-zinc-50 dark:border-zinc-800 pt-4">
 
-                        <ul class="ml-2 pl-3 border-l-2 border-zinc-100 dark:border-zinc-800 space-y-2">
-                            <li v-for="child in sub.children" :key="child.code" 
-                                @click="copyToClipboard(child.code)"
-                                class="text-sm cursor-pointer hover:text-indigo-600 transition-colors py-1 group">
-                                <span class="font-mono font-bold text-indigo-500 mr-2">{{ child.code }}</span>
-                                <span class="text-zinc-600 dark:text-zinc-400">{{ child.description }}</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+              <!-- Qrup toggle -->
+              <button
+                type="button"
+                @click="toggleSub(groupCode)"
+                :aria-expanded="isSubOpen(groupCode)"
+                :aria-controls="`sub-${groupCode}`"
+                class="flex items-start gap-4 text-left w-full group/sub">
+                <span class="flex-shrink-0 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-mono font-bold text-xs px-3 py-1.5 rounded-xl">
+                  {{ groupCode }}
+                </span>
+                <span class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 group-hover/sub:text-indigo-600 transition-colors">
+                  {{ sub.main.description }}
+                </span>
+              </button>
+
+              <!-- Alt elementlər -->
+              <transition name="acc">
+                <ul v-if="isSubOpen(groupCode) && sub.children.length" :id="`sub-${groupCode}`" class="mt-4 ml-4 pl-4 border-l-2 border-indigo-500/20 space-y-3">
+                  <li v-for="child in sub.children" :key="child.code" class="flex items-start gap-3 group/item">
+                    <span class="flex-shrink-0 text-indigo-500 font-mono font-bold text-xs pt-1">{{ child.code }}</span>
+                    <span class="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed group-hover/item:text-zinc-900 dark:group-hover/item:text-white transition-colors">
+                      {{ child.description }}
+                    </span>
+                  </li>
+                </ul>
+              </transition>
             </div>
-            
-            <div v-if="Object.keys(filteredData).length === 0 && !loading" class="text-center py-20 text-zinc-400">
-                Nəticə tapılmadı.
-            </div>
-        </div>
-    </main>
+          </div>
+        </transition>
+      </div>
+
+      <!-- Boş hal -->
+      <div v-if="resultCount === 0 && debouncedQuery" class="py-24 text-center text-zinc-400 italic">
+        Nəticə tapılmadı.
+      </div>
+    </template>
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-6 py-12 border-t border-zinc-100 dark:border-zinc-900 text-xs text-zinc-400 text-center">
+    <p>© 2026 JediKedy | Ümumdünya Səhiyyə Təşkilatının standartlarına uyğun təsnifat.</p>
+  </footer>
 </div>
 
+<!-- ── Service Worker ──────────────────────────────────────── -->
+<script>
+if ('serviceWorker' in navigator) {
+  const SW = `
+const CACHE = 'xbt10-v1';
+const PRECACHE = [
+  'https://cdn.tailwindcss.com',
+  'https://unpkg.com/vue@3/dist/vue.global.js',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap'
+];
+
+self.addEventListener('install',  e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE).catch(()=>{}))) });
+self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())) });
+self.addEventListener('fetch', e => {
+  const isData = e.request.url.includes('raw.githubusercontent.com');
+  e.respondWith(
+    isData
+      ? fetch(e.request).catch(() => caches.match(e.request))
+      : caches.match(e.request).then(hit => hit || fetch(e.request).then(r => { caches.open(CACHE).then(c => c.put(e.request, r.clone())); return r }))
+  );
+});
+`;
+  const url = URL.createObjectURL(new Blob([SW], { type: 'application/javascript' }));
+  navigator.serviceWorker.register(url, { scope: './' }).catch(e => console.warn('SW:', e));
+}
+</script>
+
+<!-- ── App ──────────────────────────────────────────────────── -->
 <script>
 const { createApp, ref, computed, watch, onMounted } = Vue;
 
-createApp({
-    setup() {
-        const searchQuery = ref('');
-        const query = ref('');
-        const rawData = ref({});
-        const loading = ref(true);
-        const openMain = ref(null);
-        const toast = ref(null);
-        const isDark = ref(document.documentElement.classList.contains('dark'));
+const DATA_URL = 'https://raw.githubusercontent.com/JediKedy/xbt10/refs/heads/main/data.json';
 
-        // Donmanı önləyən axtarış (Debounce)
-        let timeout;
-        watch(searchQuery, (v) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => query.value = v.toLowerCase(), 200);
-        });
-
-        const toggleDark = () => {
-            isDark.value = !isDark.value;
-            document.documentElement.classList.toggle('dark', isDark.value);
-            localStorage.setItem('theme', isDark.value ? 'dark' : 'light');
-        };
-
-        const copyToClipboard = (text) => {
-            navigator.clipboard.writeText(text);
-            toast.value = `${text} kopyalandı!`;
-            setTimeout(() => toast.value = null, 1500);
-        };
-
-        const fetchData = async () => {
-            try {
-                const cached = localStorage.getItem('xbt_cache_v2');
-                if (cached) {
-                    rawData.value = Object.freeze(JSON.parse(cached));
-                    loading.value = false;
-                }
-                const res = await fetch('data.json');
-                const json = await res.json();
-                const transformed = {};
-                for (const [cat, items] of Object.entries(json.data)) {
-                    const groups = {};
-                    items.forEach(item => {
-                        if (!item.code.includes('.')) {
-                            groups[item.code] = { main: item, children: groups[item.code]?.children || [] };
-                        } else {
-                            const pCode = item.code.split('.')[0];
-                            if (!groups[pCode]) groups[pCode] = { main: { code: pCode, description: pCode }, children: [] };
-                            groups[pCode].children.push(item);
-                        }
-                    });
-                    transformed[cat] = groups;
-                }
-                rawData.value = Object.freeze(transformed);
-                localStorage.setItem('xbt_cache_v2', JSON.stringify(transformed));
-            } catch (e) { console.error("Data error"); }
-            finally { loading.value = false; }
-        };
-
-        // Əsas filtrasiya
-        const filteredData = computed(() => {
-            if (!query.value) return rawData.value;
-            const q = query.value;
-            const res = {};
-            for (const [cat, groups] of Object.entries(rawData.value)) {
-                const fGroups = {};
-                for (const [gCode, group] of Object.entries(groups)) {
-                    const mMatch = gCode.toLowerCase().includes(q) || group.main.description.toLowerCase().includes(q);
-                    const fChildren = group.children.filter(c => c.code.toLowerCase().includes(q) || c.description.toLowerCase().includes(q));
-                    if (mMatch || fChildren.length) {
-                        fGroups[gCode] = { ...group, children: mMatch ? group.children : fChildren };
-                    }
-                }
-                if (Object.keys(fGroups).length) res[cat] = fGroups;
-            }
-            return res;
-        });
-
-        // PERFORMANS ÜÇÜN: Nəticəni limitləmək (Donmanı həll edən əsas hissə)
-        const limitedData = computed(() => {
-            if (!query.value) return filteredData.value;
-            const res = {};
-            let count = 0;
-            for (const [cat, groups] of Object.entries(filteredData.value)) {
-                res[cat] = groups;
-                count += Object.keys(groups).length;
-                if (count > 50) break; // Cəmi 50 əsas qrup göstər (donmanı dərhal dayandırır)
-            }
-            return res;
-        });
-
-        const toggleMain = (cat) => openMain.value = openMain.value === cat ? null : cat;
-
-        onMounted(fetchData);
-
-        return { 
-            searchQuery, query, loading, limitedData, filteredData, openMain, 
-            isDark, toast, toggleDark, toggleMain, copyToClipboard 
-        };
+/**
+ * Düz massivdən iyerarxik { groupCode: { main, children[] } } qurur.
+ * rawData dəyişmədikdə yenidən çağrılmır (transformedData computed-da cache-lənir).
+ */
+function buildGroups(items) {
+  const groups = {};
+  for (const item of items) {
+    if (!item.code.includes('.')) {
+      groups[item.code] ??= { main: item, children: [] };
+      groups[item.code].main = item;
+    } else {
+      const parent = item.code.split('.')[0];
+      groups[parent] ??= { main: { code: parent, description: parent }, children: [] };
+      groups[parent].children.push(item);
     }
+  }
+  return groups;
+}
+
+/** Düz data → { category: groups } */
+function transform(data) {
+  const out = {};
+  for (const [cat, items] of Object.entries(data)) {
+    out[cat] = buildGroups(items);
+  }
+  return out;
+}
+
+createApp({
+  setup() {
+    /* ── State ── */
+    const query          = ref('');
+    const debouncedQuery = ref('');
+    const rawData        = ref(null);
+    const loading        = ref(true);
+    const error          = ref(null);
+
+    // FIX 3: İki ayrı ref əvəzinə bir obyekt — daha sadə idarəetmə
+    const open = ref({ main: null, sub: null });
+
+    const isDark     = ref(document.documentElement.classList.contains('dark'));
+    const pwaPrompt  = ref(null);
+    const showBanner = ref(false);
+
+    /* ── FIX 1: Debounce — 150ms gözlədikdən sonra axtarış işlə ── */
+    let debounceTimer;
+    watch(query, val => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => { debouncedQuery.value = val; }, 150);
+    });
+
+    /* ── Tema ── */
+    function toggleDark() {
+      isDark.value = !isDark.value;
+      document.documentElement.classList.toggle('dark', isDark.value);
+      try { localStorage.setItem('theme', isDark.value ? 'dark' : 'light'); } catch (_) {}
+    }
+
+    /* ── PWA ── */
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      pwaPrompt.value = e;
+      try {
+        if (!localStorage.getItem('pwa-dismissed')) {
+          setTimeout(() => { showBanner.value = true; }, 3000);
+        }
+      } catch (_) {
+        setTimeout(() => { showBanner.value = true; }, 3000);
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      pwaPrompt.value = null;
+      showBanner.value = false;
+    });
+
+    async function installPWA() {
+      showBanner.value = false;
+      if (!pwaPrompt.value) return;
+      pwaPrompt.value.prompt();
+      const { outcome } = await pwaPrompt.value.userChoice;
+      if (outcome === 'dismissed') {
+        try { localStorage.setItem('pwa-dismissed', '1'); } catch (_) {}
+      }
+      pwaPrompt.value = null;
+    }
+
+    function dismissBanner() {
+      showBanner.value = false;
+      try { localStorage.setItem('pwa-dismissed', '1'); } catch (_) {}
+    }
+
+    /* ── Data fetch ── */
+    async function fetchData() {
+      loading.value = true;
+      error.value   = null;
+      // rawData-nı sıfırlamırıq — köhnə məlumat yüklənənə qədər görünür (daha yaxşı UX)
+      try {
+        const res = await fetch(DATA_URL);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        rawData.value = Object.freeze(json.data ?? {});
+      } catch (e) {
+        console.error('Fetch failed:', e);
+        error.value = 'Məlumat bazası yüklənmədi. Yenidən cəhd edin.';
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    onMounted(fetchData);
+
+    /* ── FIX 2: transform() cache-lənib — rawData dəyişdikdə bir dəfə işlər ── */
+    const transformedData = computed(() => {
+      if (!rawData.value) return {};
+      return transform(rawData.value);
+    });
+
+    /* ── Filtered data — yalnız debouncedQuery dəyişdikdə işlər ── */
+    const processedData = computed(() => {
+      const q = debouncedQuery.value.toLowerCase();
+      if (!q) return transformedData.value;
+
+      const filtered = {};
+      for (const [cat, items] of Object.entries(rawData.value)) {
+        const matches = items.filter(i =>
+          i.code.toLowerCase().includes(q) ||
+          i.description.toLowerCase().includes(q)
+        );
+        if (matches.length) filtered[cat] = matches;
+      }
+      return transform(filtered);
+    });
+
+    /* ── FIX 4: resultCount — bölmə deyil, fərdi nəticə sayı ── */
+    const resultCount = computed(() =>
+      Object.values(processedData.value).reduce((total, groups) =>
+        total + Object.values(groups).reduce((n, g) => n + 1 + g.children.length, 0),
+      0)
+    );
+
+    /* ── Accordion köməkçiləri ── */
+    const isSearching = () => !!debouncedQuery.value;
+
+    function isMainOpen(cat)  { return isSearching() || open.value.main === cat; }
+    function isSubOpen(code)  { return isSearching() || open.value.sub  === code; }
+
+    // FIX 3: toggleMain indi open obyektini birlikdə yeniləyir
+    function toggleMain(cat) {
+      if (isSearching()) return;
+      if (open.value.main === cat) {
+        open.value = { main: null, sub: null };
+      } else {
+        open.value = { main: cat, sub: null }; // kateqoriya dəyişdikdə alt qrupu sıfırla
+      }
+    }
+
+    function toggleSub(code) {
+      if (isSearching()) return;
+      open.value = {
+        main: open.value.main,
+        sub: open.value.sub === code ? null : code
+      };
+    }
+
+    return {
+      query, debouncedQuery, processedData, resultCount,
+      loading, error, fetchData,
+      open, isMainOpen, isSubOpen, toggleMain, toggleSub,
+      isDark, toggleDark,
+      pwaPrompt, showBanner, installPWA, dismissBanner,
+    };
+  }
 }).mount('#app');
 </script>
 </body>
