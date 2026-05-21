@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>XBT-10 | Rəqəmsal Klassifikasiya</title>
+<title>XBT-10</title>
 <meta name="application-name" content="XBT-10">
 <meta name="description" content="XBT-10 Rəqəmsal Klassifikasiya — Ümumdünya Səhiyyə Təşkilatının standartlarına uyğun təsnifat.">
 <meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: light)">
@@ -35,6 +35,12 @@
 </script>
 <style>
   [v-cloak] { display: none }
+
+  /* Navbar backdrop blur — Tailwind utility ilə deyil, birbaşa CSS */
+  .nav-glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
 
   .acc-enter-active,
   .acc-leave-active {
@@ -71,13 +77,13 @@
 <div id="app" v-cloak>
 
   <!-- ── Navbar ─────────────────────────────────────────────── -->
-  <nav class="fixed w-full z-50 top-0 bg-white/70 dark:bg-zinc-950/70 border-b border-zinc-100 dark:border-zinc-900 glass">
+  <nav class="fixed w-full z-50 top-0 bg-white/70 dark:bg-zinc-950/70 border-b border-zinc-100 dark:border-zinc-900 nav-glass">
     <div class="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
 
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-indigo-600" aria-hidden="true"></span>
         <h1 class="text-lg font-bold tracking-tighter uppercase">
-          XBT-10 <span class="text-indigo-600 dark:text-indigo-400 font-normal lowercase">ultra</span>
+          XBT-10
         </h1>
       </div>
 
@@ -263,22 +269,73 @@
 <!-- ── Service Worker ──────────────────────────────────────── -->
 <script>
 if ('serviceWorker' in navigator) {
+  // FIX: PRECACHE-dən CDN URL-ləri çıxarıldı — cross-origin opaque response-lar
+  // cache storage-da etibarlı şəkildə saxlanıla bilməz və SW-i çökdürə bilər.
+  // Yalnız same-origin resurslar (manifest, icon, data) cache-lənir.
   const SW = `
-const CACHE = 'xbt10-v1';
-const PRECACHE = [
-  'https://cdn.tailwindcss.com',
-  'https://unpkg.com/vue@3/dist/vue.global.js',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap'
-];
+const CACHE = 'xbt10-v2';
 
-self.addEventListener('install',  e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE).catch(()=>{}))) });
-self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())) });
+self.addEventListener('install',  () => self.skipWaiting());
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== 'xbt10-v2').map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
 self.addEventListener('fetch', e => {
-  const isData = e.request.url.includes('raw.githubusercontent.com');
+  const url = e.request.url;
+
+  // Yalnız GET sorğularını idarə et
+  if (e.request.method !== 'GET') return;
+
+  // GitHub raw data — network-first (həmişə təzə data)
+  if (url.includes('raw.githubusercontent.com')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(r => {
+          if (r.ok) {
+            const clone = r.clone();
+            caches.open('xbt10-v2').then(c => c.put(e.request, clone));
+          }
+          return r;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Cross-origin CDN (fonts, scripts) — cache-first, yoxdursa network
+  if (!url.startsWith(self.location.origin)) {
+    e.respondWith(
+      caches.match(e.request).then(hit => {
+        if (hit) return hit;
+        return fetch(e.request).then(r => {
+          // Yalnız uğurlu same-origin cavabları cache-lə
+          // (cross-origin opaque response-ları saxlamırıq)
+          if (r.status === 200 && r.type !== 'opaque') {
+            caches.open('xbt10-v2').then(c => c.put(e.request, r.clone()));
+          }
+          return r;
+        });
+      })
+    );
+    return;
+  }
+
+  // Same-origin — stale-while-revalidate
   e.respondWith(
-    isData
-      ? fetch(e.request).catch(() => caches.match(e.request))
-      : caches.match(e.request).then(hit => hit || fetch(e.request).then(r => { caches.open(CACHE).then(c => c.put(e.request, r.clone())); return r }))
+    caches.open('xbt10-v2').then(cache =>
+      cache.match(e.request).then(cached => {
+        const fetchPromise = fetch(e.request).then(r => {
+          if (r.ok) cache.put(e.request, r.clone());
+          return r;
+        });
+        return cached || fetchPromise;
+      })
+    )
   );
 });
 `;
@@ -289,23 +346,32 @@ self.addEventListener('fetch', e => {
 
 <!-- ── App ──────────────────────────────────────────────────── -->
 <script>
-const { createApp, ref, computed, watch, onMounted } = Vue;
+const { createApp, ref, computed, watch, onMounted, shallowRef } = Vue;
 
 const DATA_URL = 'https://raw.githubusercontent.com/JediKedy/xbt10/refs/heads/main/data.json';
 
 /**
  * Düz massivdən iyerarxik { groupCode: { main, children[] } } qurur.
- * rawData dəyişmədikdə yenidən çağrılmır (transformedData computed-da cache-lənir).
+ * Object.create(null) ilə prototipsiz obyekt — hasOwnProperty lazım deyil,
+ * həm də bir az daha sürətlidir.
  */
 function buildGroups(items) {
-  const groups = {};
+  const groups = Object.create(null);
   for (const item of items) {
-    if (!item.code.includes('.')) {
-      groups[item.code] ??= { main: item, children: [] };
-      groups[item.code].main = item;
+    const dot = item.code.indexOf('.');
+    if (dot === -1) {
+      // Ana kod
+      if (groups[item.code]) {
+        groups[item.code].main = item;
+      } else {
+        groups[item.code] = { main: item, children: [] };
+      }
     } else {
-      const parent = item.code.split('.')[0];
-      groups[parent] ??= { main: { code: parent, description: parent }, children: [] };
+      // Alt kod
+      const parent = item.code.slice(0, dot);
+      if (!groups[parent]) {
+        groups[parent] = { main: { code: parent, description: parent }, children: [] };
+      }
       groups[parent].children.push(item);
     }
   }
@@ -314,11 +380,27 @@ function buildGroups(items) {
 
 /** Düz data → { category: groups } */
 function transform(data) {
-  const out = {};
-  for (const [cat, items] of Object.entries(data)) {
-    out[cat] = buildGroups(items);
+  const out = Object.create(null);
+  for (const cat in data) {
+    out[cat] = buildGroups(data[cat]);
   }
   return out;
+}
+
+/**
+ * Axtarış üçün sürətli flat filter.
+ * Hər item üçün `searchKey` (lowercase) əvvəlcədən hazırlanmışdır.
+ * Bu funksiya yalnız filteredRaw computed-da istifadə olunur.
+ */
+function buildSearchIndex(data) {
+  const index = Object.create(null);
+  for (const cat in data) {
+    index[cat] = data[cat].map(item => ({
+      ...item,
+      _key: item.code.toLowerCase() + ' ' + item.description.toLowerCase()
+    }));
+  }
+  return index;
 }
 
 createApp({
@@ -326,22 +408,49 @@ createApp({
     /* ── State ── */
     const query          = ref('');
     const debouncedQuery = ref('');
-    const rawData        = ref(null);
+
+    // shallowRef: rawData daxilindəki obyektlər reaktiv izlənmir —
+    // böyük JSON üçün əhəmiyyətli performans qazancı.
+    const rawData        = shallowRef(null);
+    const searchIndex    = shallowRef(null); // axtarış indeksi (lowercase)
     const loading        = ref(true);
     const error          = ref(null);
 
-    // FIX 3: İki ayrı ref əvəzinə bir obyekt — daha sadə idarəetmə
-    const open = ref({ main: null, sub: null });
+    // Accordion state: reaktiv obyekt (Vue 3-də reactive() daha etibarlıdır)
+    const openMain = ref(null);
+    const openSub  = ref(null);
 
     const isDark     = ref(document.documentElement.classList.contains('dark'));
     const pwaPrompt  = ref(null);
     const showBanner = ref(false);
 
-    /* ── FIX 1: Debounce — 150ms gözlədikdən sonra axtarış işlə ── */
+    /* ── PWA: beforeinstallprompt listener — bu olmadan pwaPrompt heç vaxt set edilmirdi ── */
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      pwaPrompt.value = e;
+
+      // Banner artıq bağlanıbsa göstərmə
+      try {
+        if (!localStorage.getItem('pwa-dismissed')) {
+          showBanner.value = true;
+        }
+      } catch (_) {
+        showBanner.value = true;
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      pwaPrompt.value  = null;
+      showBanner.value = false;
+    });
+
+    /* ── Debounce — 200ms (150ms mobil klaviaturada çox tez ola bilər) ── */
     let debounceTimer;
     watch(query, val => {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => { debouncedQuery.value = val; }, 150);
+      debounceTimer = setTimeout(() => {
+        debouncedQuery.value = val.toLowerCase(); // bir dəfə lowercase
+      }, 200);
     });
 
     /* ── Tema ── */
@@ -352,12 +461,6 @@ createApp({
     }
 
     /* ── PWA ── */
-
-    window.addEventListener('appinstalled', () => {
-      pwaPrompt.value = null;
-      showBanner.value = false;
-    });
-
     async function installPWA() {
       showBanner.value = false;
       if (!pwaPrompt.value) return;
@@ -378,12 +481,13 @@ createApp({
     async function fetchData() {
       loading.value = true;
       error.value   = null;
-      // rawData-nı sıfırlamırıq — köhnə məlumat yüklənənə qədər görünür (daha yaxşı UX)
       try {
         const res = await fetch(DATA_URL);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        rawData.value = Object.freeze(json.data ?? {});
+        const data = Object.freeze(json.data ?? {});
+        rawData.value     = data;
+        searchIndex.value = buildSearchIndex(data); // axtarış indeksini bir dəfə qur
       } catch (e) {
         console.error('Fetch failed:', e);
         error.value = 'Məlumat bazası yüklənmədi. Yenidən cəhd edin.';
@@ -394,63 +498,66 @@ createApp({
 
     onMounted(fetchData);
 
-    /* ── FIX 2: transform() cache-lənib — rawData dəyişdikdə bir dəfə işlər ── */
+    /* ── transformedData: rawData dəyişdikdə bir dəfə işlər ── */
     const transformedData = computed(() => {
       if (!rawData.value) return {};
       return transform(rawData.value);
     });
 
-    /* ── Filtered data — yalnız debouncedQuery dəyişdikdə işlər ── */
+    /**
+     * FIX: filteredRaw — axtarış zamanı ham data üzərində işlə,
+     * transformedData-dan yox. Beləliklə rawData + transformedData arasında
+     * inkonsistelik aradan qalxır. searchIndex (lowercase) istifadəsi ilə
+     * hər filter iterasiyasında toLowerCase() çağırışı yoxdur.
+     */
     const processedData = computed(() => {
-      const q = debouncedQuery.value.toLowerCase();
-      if (!q) return transformedData.value;
+      const q = debouncedQuery.value; // artıq lowercase
+      if (!q || !searchIndex.value) return transformedData.value;
 
-      const filtered = {};
-      for (const [cat, items] of Object.entries(rawData.value)) {
-        const matches = items.filter(i =>
-          i.code.toLowerCase().includes(q) ||
-          i.description.toLowerCase().includes(q)
-        );
-        if (matches.length) filtered[cat] = matches;
+      const filtered = Object.create(null);
+      for (const cat in searchIndex.value) {
+        const matches = searchIndex.value[cat].filter(i => i._key.includes(q));
+        if (matches.length) {
+          // _key field-ini nəticədən çıxart
+          filtered[cat] = matches.map(({ _key, ...item }) => item);
+        }
       }
       return transform(filtered);
     });
 
-    /* ── FIX 4: resultCount — bölmə deyil, fərdi nəticə sayı ── */
+    /* ── resultCount ── */
     const resultCount = computed(() =>
       Object.values(processedData.value).reduce((total, groups) =>
         total + Object.values(groups).reduce((n, g) => n + 1 + g.children.length, 0),
       0)
     );
 
-    /* ── Accordion köməkçiləri ── */
+    /* ── Accordion ── */
     const isSearching = () => !!debouncedQuery.value;
 
-    function isMainOpen(cat)  { return isSearching() || open.value.main === cat; }
-    function isSubOpen(code)  { return isSearching() || open.value.sub  === code; }
+    function isMainOpen(cat)  { return isSearching() || openMain.value === cat; }
+    function isSubOpen(code)  { return isSearching() || openSub.value  === code; }
 
-    // FIX 3: toggleMain indi open obyektini birlikdə yeniləyir
     function toggleMain(cat) {
       if (isSearching()) return;
-      if (open.value.main === cat) {
-        open.value = { main: null, sub: null };
+      if (openMain.value === cat) {
+        openMain.value = null;
+        openSub.value  = null; // kateqoriya bağlandıqda alt qrupu da bağla
       } else {
-        open.value = { main: cat, sub: null }; // kateqoriya dəyişdikdə alt qrupu sıfırla
+        openMain.value = cat;
+        openSub.value  = null; // yeni kateqoriya açıldıqda köhnə alt qrupu sıfırla
       }
     }
 
     function toggleSub(code) {
       if (isSearching()) return;
-      open.value = {
-        main: open.value.main,
-        sub: open.value.sub === code ? null : code
-      };
+      openSub.value = openSub.value === code ? null : code;
     }
 
     return {
       query, debouncedQuery, processedData, resultCount,
       loading, error, fetchData,
-      open, isMainOpen, isSubOpen, toggleMain, toggleSub,
+      isMainOpen, isSubOpen, toggleMain, toggleSub,
       isDark, toggleDark,
       pwaPrompt, showBanner, installPWA, dismissBanner,
     };
